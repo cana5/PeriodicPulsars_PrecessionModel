@@ -1,2 +1,2 @@
-# PeriodicPulsars_PrecessionModel
+# PeriodicPulsars_PrecessionModels
 *needs data files to run*
