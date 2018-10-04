@@ -66,33 +66,37 @@ likelihood = tupak.core.likelihood.GaussianLikelihood(x=MJD_seconds, y=nudot,
 # Fill in the priors/parameters for the appropriate values:
 priors = {}
 
-# These values do not have parameters:
-priors['tau_age'] = 213827.91 * seconds_in_year
-priors['P'] = 0.405
-priors['n'] = 16.08
+# This value does not have a parameter:
 priors['t_ref'] = 49621 * seconds_in_day
 
-# Define the above fixed priors explicitly:
+# Define the above fixed prior explicitly:
 fixed_priors = priors.copy()
 
-# These values have a minimum and maximum parameter:
-priors['theta'] = tupak.prior.Uniform(minimum=0, maximum=0.1, name='theta')
-priors['chi'] = tupak.prior.Uniform(minimum=2 * np.pi / 5, maximum=np.pi / 2, 
-      name='chi')
-priors['psi_initial'] = tupak.prior.Uniform(minimum=0, maximum=2 * np.pi, 
+# These values have a minimum and maximum parameter (uniform distribution):
+priors['theta'] = tupak.core.prior.Uniform(minimum=0, maximum=0.1, 
+      name='theta')
+priors['chi'] = tupak.core.prior.Uniform(minimum=2 * np.pi / 5, 
+      maximum=np.pi / 2, name='chi')
+priors['psi_initial'] = tupak.core.prior.Uniform(minimum=0, maximum=2 * np.pi, 
       name='psi_initial')
 
-priors['taup_naught'] = tupak.prior.Uniform(minimum=450 * seconds_in_day, 
+priors['taup_naught'] = tupak.core.prior.Uniform(minimum=450 * seconds_in_day, 
       maximum=550 * seconds_in_day, name='taup_naught')
-priors['taup_dot'] = tupak.prior.Uniform(minimum=-1, maximum=1, 
+priors['taup_dot'] = tupak.core.prior.Uniform(minimum=-1, maximum=1, 
       name='taup_dot')
 
-priors['sigma'] = tupak.core.prior.Uniform(0, 1e-15, 'sigma')
+priors['sigma'] = tupak.core.prior.Uniform(0, 1e-15, name='sigma')
+
+# These values have a mean and standard deviation (normal distribution):
+priors['tau_age'] = tupak.core.prior.Gaussian(213827.91 * seconds_in_year, 
+      0.3169 * seconds_in_year, 'tau_age')
+priors['P'] = tupak.core.prior.Gaussian(0.405043321630, 1.2 * 10**(-11),'P')
+priors['n'] = tupak.core.prior.Gaussian(16.08, 0.17, 'n')
 
 # Run the sampler:
 result = tupak.run_sampler(
     likelihood=likelihood, priors=priors, sampler='dynesty', nlive=1000,
-    walks=30, outdir=outdir, label=label, clean=True)
+    walks=50, outdir=outdir, label=label, clean=True)
 result.plot_corner()
 
 # Define a new plot:
