@@ -1,10 +1,6 @@
-#!/bin/python
-"""
-
-"""
 # Import the following programs:
 from __future__ import division
-import tupak
+import bilby
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -59,36 +55,40 @@ def model(MJD_seconds, tau_age, P, n, t_ref, theta, chi, tau_p, psi_initial,
     return mean * (a + b + c + d)
 
 # This is the 'likelihood' function:
-likelihood = tupak.core.likelihood.GaussianLikelihood(x=MJD_seconds, y=nudot, 
-                                                      function=model)
+likelihood = bilby.core.likelihood.GaussianLikelihood(x=MJD_seconds, y=nudot, 
+                                                      func=model)
 
 # Fill in the priors/parameters for the appropriate values:
 priors = {}
 
-# These values do not have parameters:
-priors['tau_age'] = 213827.91 * seconds_in_year
-priors['P'] = 0.405
-priors['n'] = 16.08
+# This value does not have a parameter:
 priors['t_ref'] = 49621 * seconds_in_day
 
-# Define the above fixed priors explicitly:
+# Define the above fixed prior explicitly:
 fixed_priors = priors.copy()
 
-# These values have a minimum and maximum parameter:
-priors['tau_p'] = tupak.prior.Uniform(minimum=450 * 86400, maximum=550 * 86400, 
-      name='tau_p')
-priors['theta'] = tupak.prior.Uniform(minimum=0, maximum=0.1, name='theta')
-priors['chi'] = tupak.prior.Uniform(minimum=2 * np.pi / 5, maximum=np.pi / 2, 
-      name='chi')
-priors['psi_initial'] = tupak.prior.Uniform(minimum=0, maximum=2 * np.pi, 
+# These values have a minimum and maximum parameter (uniform distribution):
+priors['tau_p'] = bilby.core.prior.Uniform(minimum=450 * 86400, 
+      maximum=550 * 86400, name='tau_p')
+priors['theta'] = bilby.core.prior.Uniform(minimum=0, maximum=0.1, 
+      name='theta')
+priors['chi'] = bilby.core.prior.Uniform(minimum=2 * np.pi / 5, 
+      maximum=np.pi / 2, name='chi')
+priors['psi_initial'] = bilby.core.prior.Uniform(minimum=0, maximum=2 * np.pi, 
       name='psi_initial')
 
-priors['sigma'] = tupak.core.prior.Uniform(0, 1e-15, 'sigma')
+priors['sigma'] = bilby.core.prior.Uniform(0, 1e-15, 'sigma')
+
+# These values have a mean and standard deviation (normal distribution):
+priors['tau_age'] = bilby.core.prior.Gaussian(213827.91 * seconds_in_year, 
+      0.3169 * seconds_in_year, 'tau_age')
+priors['P'] = bilby.core.prior.Gaussian(0.405043321630, 1.2 * 10**(-11),'P')
+priors['n'] = bilby.core.prior.Gaussian(16.08, 0.17, 'n')
 
 # Run the sampler:
-result = tupak.run_sampler(
-    likelihood=likelihood, priors=priors, sampler='dynesty', npoints=100,
-    walks=10, outdir=outdir, label=label, clean=True)
+result = bilby.sampler.run_sampler(
+    likelihood=likelihood, priors=priors, sampler='nestle', nlive=1000,
+    walks=50, outdir=outdir, label=label, clean=True)
 result.plot_corner()
 
 # Define a new plot:
@@ -108,4 +108,3 @@ txt = ("Graph of the precession function with multiple data fitted parameters,"
 plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', 
             fontsize=10)
 fig.savefig('{}/data_with_fit.pdf'.format(outdir))
-# Save .pdf as .png for high resolution image.
